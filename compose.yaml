@@ -1,0 +1,35 @@
+services:
+  api:
+    build: .
+    image: perpl-arena:local
+    command: ["node", "dist/index.js"]
+    env_file:
+      - .env
+    environment:
+      PORT: ${PORT:-8080}
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/health/').then(r=>r.json()).then(d=>process.exit(d.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  worker:
+    image: perpl-arena:local
+    command: ["node", "dist/worker.js"]
+    env_file:
+      - .env
+    environment:
+      DRY_RUN: ${DRY_RUN:-true}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s

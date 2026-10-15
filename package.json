@@ -1,0 +1,39 @@
+{
+  "name": "@workspace/perpl-arena",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.11.2",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "node --env-file=.env --import tsx --watch src/index.ts",
+    "dev:worker": "node --env-file=.env --import tsx --watch src/worker.ts",
+    "dev:tunnel": "node --env-file=.env --import tsx --watch src/tunnel.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node --env-file-if-exists=.env dist/index.js",
+    "start:worker": "node --env-file-if-exists=.env dist/worker.js",
+    "start:tunnel": "node --env-file-if-exists=.env dist/tunnel.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:smoke": "tsx smoke.ts",
+    "test:integration": "tsx integration.ts",
+    "test:lifecycle": "tsx lifecycle.ts",
+    "test:e2e": "tsx e2e.ts",
+    "db:push": "psql \"$SUPABASE_DB_URL\" -f sql/schema.sql"
+  },
+  "dependencies": {
+    "@ngrok/ngrok": "^1.7.0",
+    "@noble/ed25519": "^2.2.0",
+    "@supabase/supabase-js": "^2.58.0",
+    "ethers": "^6.17.0",
+    "express": "^5.1.0",
+    "pg": "^8.16.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.11.0",
+    "tsx": "^4.19.0",
+    "typescript": "~6.0.3"
+  }
+}

@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+node_modules
+dist
+coverage
+*.tsbuildinfo
+Dockerfile*
+compose*.yaml
+docker-compose*.yml
