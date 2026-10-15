@@ -221,8 +221,10 @@ for (const path of assetLinks) {
     response.status === 200 &&
       response.headers.get('content-type')?.includes('application/json') ===
         true &&
-      body[0]?.target?.package_name === 'com.ausd.wallet' &&
-      body[0]?.target?.sha256_cert_fingerprints?.length === 2,
+      body[0]?.target?.package_name === 'com.pera.mobile' &&
+      body[0]?.target?.sha256_cert_fingerprints?.length === 1 &&
+      body[0]?.target?.sha256_cert_fingerprints[0] ===
+        'FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C',
     body,
   );
 }
