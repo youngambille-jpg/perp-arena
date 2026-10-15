@@ -16,6 +16,36 @@ The current ngrok address is temporary and can change when its tunnel restarts.
 
 ## New and updated endpoints
 
+### `GET /.well-known/assetlinks.json` — public
+
+Returns the Android Digital Asset Links statement for the AUSD Wallet app.
+This exact, singular `assetlinks.json` path is the Android-standard URL.
+`GET /.well-known/assetslinks.json` (with an extra `s`) is also provided as a
+compatibility alias.
+
+```json
+[
+  {
+    "relation": ["delegate_permission/common.get_login_creds"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.ausd.wallet",
+      "sha256_cert_fingerprints": [
+        "FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C",
+        "FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C"
+      ]
+    }
+  }
+]
+```
+
+After deploying the API to Aiven, verify that
+`https://<deployed-api-host>/.well-known/assetlinks.json` returns HTTP 200
+with `Content-Type: application/json`. Android associates the statement with
+the exact web domain used by the app; if the app's sign-in origin is another
+domain, serve the same file there too and configure that origin in the Android
+app.
+
 ### `GET /meta/account-creation` — public
 
 Proxies Perpl's public context and returns the current chain, exchange

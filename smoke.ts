@@ -209,6 +209,23 @@ check(
     ?.toLowerCase()
     .includes('ngrok-skip-browser-warning') ?? false,
 );
+const assetLinks = [
+  '/.well-known/assetlinks.json',
+  '/.well-known/assetslinks.json',
+];
+for (const path of assetLinks) {
+  const response = await fetch(`http://127.0.0.1:${port}${path}`);
+  const body = await response.json();
+  check(
+    `public asset links endpoint ${path}`,
+    response.status === 200 &&
+      response.headers.get('content-type')?.includes('application/json') ===
+        true &&
+      body[0]?.target?.package_name === 'com.ausd.wallet' &&
+      body[0]?.target?.sha256_cert_fingerprints?.length === 2,
+    body,
+  );
+}
 const unauthorized = await fetch(`http://127.0.0.1:${port}/dashboard`);
 check('dashboard requires auth', unauthorized.status === 401);
 const originalFetch = globalThis.fetch;
