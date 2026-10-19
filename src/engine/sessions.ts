@@ -322,13 +322,13 @@ export class SessionRegistry implements SessionLookup {
       const state = this.marketData.stateFor(position.mkt);
       const price = state?.lst ?? state?.mrk ?? state?.mid;
       const size = BigInt(position.s ?? 0);
-      const entry = BigInt(position.p ?? 0);
+      const entry = BigInt(position.ep ?? 0);
       if (!market || price === undefined || size <= 0n || entry <= 0n) {
         continue;
       }
       equity += unrealizedPnl(
         market,
-        (position.t ?? 1) === 2 ? 2 : 1,
+        (position.sd ?? 1) === 2 ? 2 : 1,
         size,
         entry,
         BigInt(Math.round(price)),

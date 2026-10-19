@@ -389,14 +389,14 @@ export class TradingSession extends EventEmitter {
   }
 
   private applyOrderUpdate(order: Order): void {
-    if (order.rq !== undefined && order.id !== undefined) {
-      this.rqByOid.set(order.id, order.rq);
+    if (order.rq !== undefined && order.oid !== undefined) {
+      this.rqByOid.set(order.oid, order.rq);
     }
     const requestId =
       order.rq !== undefined
         ? order.rq
-        : order.id !== undefined
-          ? this.rqByOid.get(order.id)
+        : order.oid !== undefined
+          ? this.rqByOid.get(order.oid)
           : undefined;
     if (requestId === undefined) return;
 
@@ -408,7 +408,7 @@ export class TradingSession extends EventEmitter {
     // The first non-failure status is definitive (st in
     // 2, 3, 4, 5, 8, 9, 10); later updates are ignored.
     if (DEFINITIVE_STATUSES.has(status)) {
-      this.settlePending(requestId, order.id, status);
+      this.settlePending(requestId, order.oid, status);
       return;
     }
 

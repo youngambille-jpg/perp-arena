@@ -159,24 +159,26 @@ export interface Fill {
 }
 
 export interface Position {
-  id: number;
+  pid: number; // position id
   mkt: number;
   acc: number;
-  t?: number; // PositionType 1 long / 2 short
+  sd?: number; // PositionType 1 long / 2 short
   s?: number; // size (scaled)
-  p?: number; // entry price (scaled)
+  ep?: number; // entry price (scaled)
   lv?: number; // leverage hundredths
   [key: string]: unknown;
 }
 
 export interface Order {
-  id: number;
+  oid: number; // order id
   mkt: number;
   acc: number;
   t: number; // OrderType
   rq?: number; // request id
   st?: number; // OrderStatus
   sr?: number; // OrderStatusReason
+  os?: number; // order size (scaled)
+  fs?: number; // filled size (scaled)
   p?: number; // price (scaled)
   s?: number; // size (scaled)
   lv?: number; // leverage hundredths

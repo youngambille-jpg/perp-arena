@@ -146,7 +146,7 @@ export class CopyEngine {
       const priceScaled = this.currentPriceScaled(marketId);
       if (priceScaled === undefined || priceScaled <= 0n) continue;
 
-      const leaderSide = (leaderPos.t ?? 1) === 2 ? 2 : 1;
+      const leaderSide = (leaderPos.sd ?? 1) === 2 ? 2 : 1;
       const leaderNotional = scaledSizeToNotional(
         market,
         BigInt(leaderPos.s ?? 0),
@@ -664,10 +664,10 @@ export class CopyEngine {
           [
             userId,
             position.mkt,
-            String(position.id),
-            position.t ?? 1,
+            String(position.pid),
+            position.sd ?? 1,
             size.toString(),
-            String(position.p ?? 0),
+            String(position.ep ?? 0),
             position.lv ?? 0,
             leaderId,
           ],
@@ -1088,7 +1088,7 @@ export class CopyEngine {
                     status_reason = $3::int
               where id = $4
                 and status in ('submitted', 'open', 'partial')`,
-            [status, String(match.id), match.sr ?? null, order.id],
+            [status, String(match.oid), match.sr ?? null, order.id],
           );
         } else {
           await pool.query(
@@ -1097,7 +1097,7 @@ export class CopyEngine {
                     status_reason = $3::int
               where id = $4
                 and status in ('submitted', 'open', 'partial')`,
-            [status, String(match.id), match.sr ?? null, order.id],
+            [status, String(match.oid), match.sr ?? null, order.id],
           );
         }
       } else if (
