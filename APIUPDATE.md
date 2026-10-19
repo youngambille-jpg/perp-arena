@@ -244,6 +244,11 @@ same `SUPABASE_DB_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
 Production start scripts read platform-injected environment variables and
 also load `.env` if it exists. Set `DRY_RUN=true` on the worker for safe
 testing; leave it false only when you intend to submit live orders.
+Each API/worker process limits its Postgres pool to five connections because
+the Supabase session pooler has a shared connection cap. Run one API and one
+worker instance unless the database connection budget is increased. Worker
+position mirroring reuses its transaction connection for related queries to
+avoid checking out additional pool connections while holding a transaction.
 
 Enable automatic restart on process failure in the host. Check worker logs for
 market-context load, market-data WebSocket connection, session registry

@@ -9,6 +9,7 @@
 // weekly drawdown limits, stop-losses, and a one-tap kill
 // switch.
 
+import type { PoolClient } from 'pg';
 import { logger } from '../lib/logger.js';
 import { pool } from '../lib/db.js';
 import {
@@ -645,6 +646,7 @@ export class CopyEngine {
         const leaderId = await this.attributeLeader(
           userId,
           position.mkt,
+          client,
         );
         await client.query(
           `insert into positions
@@ -690,8 +692,10 @@ export class CopyEngine {
   private async attributeLeader(
     userId: string,
     marketId: number,
+    client?: PoolClient,
   ): Promise<string | null> {
-    const { rows } = await pool.query<{ leader_id: string }>(
+    const db = client ?? pool;
+    const { rows } = await db.query<{ leader_id: string }>(
       `select leader_id from copy_settings
         where user_id = $1 and enabled and kill_switch_requested_at is null`,
       [userId],

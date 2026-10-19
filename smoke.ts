@@ -23,6 +23,7 @@ const { encrypt, decrypt } = await import('./src/lib/crypto.js');
 const { enrollmentError } = await import('./src/api/routes/accounts.js');
 const { privateKeyFromHex } = await import('./src/perpl/rest.js');
 const ed = await import('@noble/ed25519');
+const { pool } = await import('./src/lib/db.js');
 
 let failures = 0;
 const check = (name: string, cond: boolean, extra?: unknown) => {
@@ -44,6 +45,7 @@ check(
 );
 check('rawToUsd', rawToUsd(100_000_000n) === 100);
 check('leverage hundredths', leverageToHundredths(10) === 1000);
+check('Postgres pool leaves session-pooler connection headroom', pool.options.max === 5);
 
 // ---- risk translation -----------------------------------------------------
 const settings = {
