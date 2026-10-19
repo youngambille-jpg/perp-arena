@@ -204,6 +204,10 @@ export class SessionRegistry implements SessionLookup {
     const session = new TradingSession(key, {
       userId: row.user_id,
       headBlockProvider: () => this.marketData.headBlock,
+      // Deadline blocks come from the live market config (testnet
+      // markets allow 20), not the client-side fallback.
+      orderTtlProvider: (marketId) =>
+        marketRegistry.market(marketId)?.order_ttl_blocks,
     });
     session.builderId =
       row.builder_id && row.builder_id > 0 ? row.builder_id : undefined;

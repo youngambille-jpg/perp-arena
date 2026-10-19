@@ -111,16 +111,19 @@ export class TradingSession extends EventEmitter {
       userId: string;
       headBlockProvider?: () => number;
       orderTtlBlocks?: number;
+      orderTtlProvider?: (marketId: number) => number | undefined;
     },
   ) {
     super();
     this.userId = opts.userId;
     this.headBlockProvider = opts.headBlockProvider ?? (() => 0);
     this.orderTtlBlocks = opts.orderTtlBlocks ?? 100;
+    this.orderTtlProvider = opts.orderTtlProvider;
   }
 
   private readonly headBlockProvider: () => number;
   private readonly orderTtlBlocks: number;
+  private readonly orderTtlProvider?: (marketId: number) => number | undefined;
 
   get ready(): boolean {
     return (
@@ -484,7 +487,12 @@ export class TradingSession extends EventEmitter {
     this.rqBySn.set(sn, requestId);
 
     const head = this.headBlockProvider() || this.headBlock;
-    const lb = head > 0 ? head + this.orderTtlBlocks : 0;
+    // `lb` must sit inside the venue's per-market window, which is
+    // far tighter than the fallback: requesting a deadline beyond
+    // market.order_ttl_blocks is rejected with
+    // "order rejected: last exec block too high".
+    const ttl = this.orderTtlProvider?.(spec.marketId) ?? this.orderTtlBlocks;
+    const lb = head > 0 ? head + ttl : 0;
 
     const frame: OrderRequestFrame = {
       mt: MT.ORDER_REQUEST,
