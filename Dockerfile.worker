@@ -1,0 +1,39 @@
+# Worker-only image: the trading brain.
+#
+# Builds the same compiled output as `Dockerfile`, but runs
+# `dist/worker.js` with no HTTP port. It talks to Supabase Postgres
+# (the shared channel with the API tier) and to Perpl; it never
+# calls the API over the network, so no app URL is needed.
+#
+# Required environment: SUPABASE_DB_URL, SUPABASE_URL,
+# SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, KEY_ENCRYPTION_KEY
+# (must match the API's), PERPL_API_URL, PERPL_WS_URL,
+# PERPL_CHAIN_ID, PERPL_BUILDER_ID, PERPL_BUILDER_FEE_PER_100K.
+# Set DRY_RUN=true to simulate orders.
+
+FROM node:24-bookworm-slim AS build
+
+WORKDIR /app
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+
+COPY tsconfig.json tsconfig.base.json ./
+COPY src ./src
+RUN pnpm build
+
+FROM node:24-bookworm-slim AS runtime
+
+ENV NODE_ENV=production
+WORKDIR /app
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --prod --frozen-lockfile
+
+COPY --from=build /app/dist ./dist
+
+USER node
+
+CMD ["node", "dist/worker.js"]

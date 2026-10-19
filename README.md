@@ -65,12 +65,15 @@ Perpl worker ────┘
    long-running processes against the same database. Configure both services
    with the required environment variables in the platform's secret manager.
    The worker needs no public port. The API alone does not maintain live
-   prices, wallet balances, positions, or order processing.
+   prices, wallet balances, positions, or order processing. Each process
+   limits its Postgres pool to 5 connections to leave capacity under Supabase
+   session-pooler limits; run one API instance and one worker unless the
+   database connection budget is adjusted.
 
 ### Deploy API and worker together with Docker Compose
 
-The API and worker run as separate containers built from the same Dockerfile.
-From this directory:
+The API and worker run as separate containers from separate Dockerfiles:
+`Dockerfile` (API) and `Dockerfile.worker` (worker). From this directory:
 
 ```bash
 Copy-Item .env.example .env   # PowerShell; edit .env and fill in credentials
@@ -86,11 +89,46 @@ restarted if it exits. Both containers use the same `.env` and database.
 Keep `.env` out of source control and Docker build contexts. Stop the stack
 with `docker compose down`; persisted state remains in Supabase Postgres.
 
-`docker compose up --build -d` is for a Docker host that supports Compose. For
-managed platforms that accept only a Dockerfile per service, deploy this same
-image twice: API command `node dist/index.js` with the configured HTTP port
-exposed, and background worker command `node dist/worker.js` with no port.
-Inject the same environment variables into both services.
+### Deploy the worker separately
+
+The API and the worker share no network link. They coordinate only through
+Supabase Postgres: the API writes rows (`copy_settings`, `manual_orders`,
+`leader_profiles`, enrolled `perpl_accounts`) and the worker polls them, and
+both write state the app reads. The worker never calls the API, so **there is
+no app URL to pass to it** — it needs the database, not the API's address.
+
+Use `Dockerfile.worker` for the worker service on a host that is separate from
+the API host:
+
+```bash
+docker build -f Dockerfile.worker -t perpl-arena-worker:local .
+```
+
+The worker exposes no port and needs no inbound access; it makes outbound
+connections to Supabase and Perpl only. Run it as a background/worker service
+(not a web service) and restart-on-exit.
+
+Inject the **same** Supabase and Perpl values the API uses:
+
+- `SUPABASE_DB_URL` — must be the same database the API writes to.
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` — required at
+  boot by `src/config.ts` for both processes.
+- `KEY_ENCRYPTION_KEY` — **must be byte-for-byte identical to the API's.**
+  Keys enrolled through the API are AES-256-GCM encrypted with it; a different
+  value makes the worker fail to decrypt stored key material.
+- `PERPL_API_URL`, `PERPL_WS_URL`, `PERPL_CHAIN_ID`, `PERPL_BUILDER_ID`,
+  `PERPL_BUILDER_FEE_PER_100K` — the same network (testnet vs mainnet) as the API.
+- `DRY_RUN` — worker-only; `true` simulates orders.
+
+`APP_ORIGIN` is only the origin sent to Perpl during key enrollment; it is the
+API's public origin, not an address the worker dials.
+
+`docker compose up --build -d` is for a single Docker host that supports
+Compose and is the quickest way to run both together. For managed platforms
+that accept only one Dockerfile per service, deploy two services: the API from
+`Dockerfile` (`node dist/index.js`) with the HTTP port exposed, and the worker
+from `Dockerfile.worker` (`node dist/worker.js`) with no port. Inject the same
+environment variables into both.
 
 ## Key enrollment (mobile flow)
 
