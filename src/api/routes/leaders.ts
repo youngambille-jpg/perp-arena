@@ -6,6 +6,7 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../../lib/db.js';
 import { ApiError } from '../../lib/errors.js';
+import { ensureUserRow } from '../../lib/users.js';
 import {
   asyncRoute,
   requireAuth,
@@ -172,6 +173,8 @@ leadersRouter.put(
       styles: string[];
       bio: string;
     };
+    // Publishing a profile must not require a prior PUT /users/me.
+    await ensureUserRow(userId);
     const { rows } = await pool.query(
       `insert into leader_profiles (user_id, is_public, styles, bio)
        values ($1, $2, $3, $4)
@@ -203,6 +206,8 @@ leadersRouter.post(
     if (leaders.length === 0) {
       throw ApiError.notFound('Leader not found or not public');
     }
+    // follows.follower_id references public.users(id).
+    await ensureUserRow(userId);
     await pool.query(
       `insert into follows (follower_id, leader_id) values ($1, $2)
        on conflict do nothing`,

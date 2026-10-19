@@ -24,6 +24,7 @@ const { enrollmentError } = await import('./src/api/routes/accounts.js');
 const { privateKeyFromHex } = await import('./src/perpl/rest.js');
 const ed = await import('@noble/ed25519');
 const { pool } = await import('./src/lib/db.js');
+const { provisionalHandle } = await import('./src/lib/users.js');
 
 let failures = 0;
 const check = (name: string, cond: boolean, extra?: unknown) => {
@@ -46,6 +47,20 @@ check(
 check('rawToUsd', rawToUsd(100_000_000n) === 100);
 check('leverage hundredths', leverageToHundredths(10) === 1000);
 check('Postgres pool leaves session-pooler connection headroom', pool.options.max === 5);
+
+// ---- profile provisioning -------------------------------------------------
+// Handles auto-created for a fresh anonymous session must satisfy the
+// same contract PUT /users/me enforces, or the user cannot claim one.
+const uidA = '06f8a004-4e96-4fce-b48b-6a72f616f618';
+const uidB = '7409bdd8-2813-45b0-bc14-69ac924de050';
+const handleA = provisionalHandle(uidA);
+check(
+  'provisional handle satisfies the client handle contract',
+  /^[a-zA-Z0-9_]{3,24}$/.test(handleA),
+  handleA,
+);
+check('provisional handle is deterministic', provisionalHandle(uidA) === handleA);
+check('provisional handle is per-user', handleA !== provisionalHandle(uidB));
 
 // ---- risk translation -----------------------------------------------------
 const settings = {

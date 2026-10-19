@@ -12,6 +12,7 @@ import * as ed from '@noble/ed25519';
 import { pool } from '../../lib/db.js';
 import { encrypt } from '../../lib/crypto.js';
 import { ApiError } from '../../lib/errors.js';
+import { ensureUserRow } from '../../lib/users.js';
 import { privateKeyFromHex } from '../../perpl/rest.js';
 import {
   APP_ORIGIN,
@@ -209,6 +210,10 @@ accountsRouter.post(
     const derived = await ed.getPublicKeyAsync(privateKey);
     void derived;
 
+    // The perpl_accounts FK requires a public.users row; a fresh
+    // anonymous session has none until the app links a wallet.
+    await ensureUserRow(userId);
+
     const { rows } = await pool.query(
       `insert into perpl_accounts
          (user_id, address, api_key_token, api_key_secret, scope_mask,
@@ -269,6 +274,10 @@ accountsRouter.post(
       maxBuilderFeePer100k?: number;
     };
     const privateKey = privateKeyFromHex(body.privateKey);
+
+    // Same FK requirement as /enroll: import must work before the app
+    // has created a profile row.
+    await ensureUserRow(userId);
 
     const { rows } = await pool.query(
       `insert into perpl_accounts
